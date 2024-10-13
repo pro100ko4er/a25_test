@@ -24,4 +24,21 @@ class AdminService {
         $this->sdbh->commit();
         
     }
+
+    public function checkExistsProduct($id) {
+        if (!$this->user->isAdmin) return;
+        $query = "SELECT id FROM `a25_products` WHERE `id` = '$id'";
+        $rows = $this->sdbh->make_query($query);
+        if(is_array($rows)) {
+            if(count($rows) >= 1) {
+                return true;
+            }
+        }
+        if(is_numeric($rows)) {
+            if(count($rows) >= 1) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

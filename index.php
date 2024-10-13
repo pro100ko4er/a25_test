@@ -4,10 +4,6 @@ $dbh = new sdbh();
 ?>
 <html>
 <head>
-<script
-  src="https://code.jquery.com/jquery-3.7.1.min.js"
-  integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
-  crossorigin="anonymous"></script>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   <link href="assets/css/style.css" rel="stylesheet">
@@ -25,11 +21,11 @@ $dbh = new sdbh();
       <div class="modal-body">
       <div class="mb-3">
   <label for="exampleFormControlInput1" class="form-label">Номер телефона</label>
-  <input type="email" class="form-control" id="exampleFormControlInput1" placeholder="+79115437689">
+  <input type="text" class="form-control" id="form-phone-number" placeholder="+ (7) (000) 000-00-00">
 </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-primary">Оставить</button>
+        <button type="button" class="btn btn-primary btn-send-request">Оставить</button>
       </div>
     </div>
   </div>
@@ -55,14 +51,16 @@ $dbh = new sdbh();
                             $price = $product['PRICE'];
                             $tarif = $product['TARIFF'];
                             ?>
-                            <option value="<?= $product['ID']; ?>"><?= $name; ?></option>
+                            <option data-tarif-product="<?= $tarif ?>" data-name-product="<?= $name ?>" value="<?= $product['ID']; ?>"><?= $name; ?></option>
                         <?php } ?>
                     </select>
                 <?php } ?>
 
-                <label for="customRange1" class="form-label" id="count">Количество дней:</label>
-                <input type="number" name="days" class="form-control" id="customRange1" min="1" max="30">
-
+                <label for="customRange1" class="form-label" id="count">Начало аренды:</label>
+                <input type="date" name="days-start-rent" class="form-control form-days-start-rent" id="customRange1">
+                <label for="customRange2" class="form-label" id="count">Конец аренды:</label>
+                <input type="date" name="days-end-rent" class="form-control form-days-end-rent" id="customRange2">
+                
                 <?php $services = unserialize($dbh->mselect_rows('a25_settings', ['set_key' => 'services'], 0, 1, 'id')[0]['set_value']);
                 if (is_array($services)) {
                     ?>
@@ -72,7 +70,7 @@ $dbh = new sdbh();
                     foreach ($services as $k => $s) {
                         ?>
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="services[]" value="<?= $s; ?>" id="flexCheck<?= $index; ?>">
+                            <input class="form-check-input" type="checkbox" name="services[]" data-name-service="<?= $k ?>" value="<?= $s; ?>" id="flexCheck<?= $index; ?>">
                             <label class="form-check-label" for="flexCheck<?= $index; ?>">
                                 <?= $k ?>: <?= $s ?>
                             </label>
@@ -84,7 +82,7 @@ $dbh = new sdbh();
             </form>
 
             <h5>Итоговая стоимость: <span id="total-price"></span></h5>
-            <button type="button" class="btn btn-success btn-leave-request hidden" data-bs-toggle="modal" data-bs-target="#exampleModal">
+            <button type="button" class="btn btn-success btn-leave-request" data-bs-toggle="modal" data-bs-target="#exampleModal">
   Оставить заявку
 </button>
         </div>
@@ -92,12 +90,55 @@ $dbh = new sdbh();
 </div>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js" integrity="sha512-pHVGpX7F/27yZ0ISY+VVjyULApbDlD0/X0rgGbTqCE7WFW5MezNTWG/dnhtbBuICzsd0WQPgpE4REBLv+UqChw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script>
     const leaveRequest = $('.btn-leave-request')
     $(document).ready(function() {
+    const phone_number = $('#form-phone-number')
+    phone_number.mask('+ (7) (000) 000-00-00')
+    const product_name = $('.form-select')
+    const product_id = $('.form-select')
+    const tarif = $('.form-select').attr('data-tarif-product')
+    const start_rent = $('.form-days-start-rent')
+    const end_rent = $('.form-days-end-rent')
+    const services = $('.form-check-input')
+    const price = $('#total-price')
+    const selected_services = []
+    for(let i = 0; i < services.length; i++) {
+        const service = $(services[i])
+        if(service.attr('checked')) {
+            selected_services.push({name: service.attr('data-name-service'), price: service.val()})
+        }
+    }
+
+        $('.btn-send-request').click(e => {
+            const data = {
+                phone_number: phone_number.val(),
+                product_name: product_name.attr('data-name-product'),
+                product_id: product_id.val(),
+                tarif: tarif.attr('data-tarif-product'),
+                start_rent: start_rent.val(),
+                end_rent: end_rent.val(),
+                price: price.text(),
+                selected_services
+            }
+            $.ajax({
+                url: 'App/Api/SendMail.php',
+                type: 'POST',
+                dataType: 'json',
+                data: JSON.stringify(data),
+                success: (data, textStatus, jqXHR) => {
+
+                },
+                error: (jqXHR, textStatus, errorThrown) => {
+                    
+                }
+            })
+        })
+
         $("#form").submit(function(event) {
             event.preventDefault();
-
+            
             $.ajax({
                 url: 'App/calculate.php',
                 type: 'POST',
