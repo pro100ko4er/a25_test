@@ -25,9 +25,16 @@ class AdminService {
         
     }
 
+    public function get($id) {
+        if (!$this->user->isAdmin) return;
+        $query = "SELECT * FROM `a25_products` WHERE `id` = '$id'";
+        $rows = $this->sdbh->make_query($query);
+        return $rows;
+    }
+
     public function checkExistsProduct($id) {
         if (!$this->user->isAdmin) return;
-        $query = "SELECT id FROM `a25_products` WHERE `id` = '$id'";
+        $query = "SELECT `id` FROM `a25_products` WHERE `id` = '$id'";
         $rows = $this->sdbh->make_query($query);
         if(is_array($rows)) {
             if(count($rows) >= 1) {

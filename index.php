@@ -25,7 +25,7 @@ $dbh = new sdbh();
 </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-primary btn-send-request">Оставить</button>
+        <button type="button" class="btn btn-primary btn-send-request" data-bs-dismiss="modal">Оставить</button>
       </div>
     </div>
   </div>
@@ -51,7 +51,7 @@ $dbh = new sdbh();
                             $price = $product['PRICE'];
                             $tarif = $product['TARIFF'];
                             ?>
-                            <option data-tarif-product="<?= $tarif ?>" data-name-product="<?= $name ?>" value="<?= $product['ID']; ?>"><?= $name; ?></option>
+                            <option value="<?= $product['ID']; ?>"><?= $name; ?></option>
                         <?php } ?>
                     </select>
                 <?php } ?>
@@ -82,41 +82,43 @@ $dbh = new sdbh();
             </form>
 
             <h5>Итоговая стоимость: <span id="total-price"></span></h5>
-            <button type="button" class="btn btn-success btn-leave-request" data-bs-toggle="modal" data-bs-target="#exampleModal">
+            <button type="button" class="btn btn-success btn-leave-request hidden" data-bs-toggle="modal" data-bs-target="#exampleModal">
   Оставить заявку
 </button>
+<div class="result"></div>
+<div class="lds-ring hidden"><div></div><div></div><div></div><div></div></div>
         </div>
     </div>
 </div>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js" integrity="sha512-pHVGpX7F/27yZ0ISY+VVjyULApbDlD0/X0rgGbTqCE7WFW5MezNTWG/dnhtbBuICzsd0WQPgpE4REBLv+UqChw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="assets/js/utils.js"></script>
 <script>
     const leaveRequest = $('.btn-leave-request')
     $(document).ready(function() {
     const phone_number = $('#form-phone-number')
     phone_number.mask('+ (7) (000) 000-00-00')
-    const product_name = $('.form-select')
     const product_id = $('.form-select')
-    const tarif = $('.form-select').attr('data-tarif-product')
     const start_rent = $('.form-days-start-rent')
     const end_rent = $('.form-days-end-rent')
     const services = $('.form-check-input')
     const price = $('#total-price')
     const selected_services = []
-    for(let i = 0; i < services.length; i++) {
+
+        $('.btn-send-request').click(e => {
+        showBlock('.lds-ring')
+        for(let i = 0; i < services.length; i++) {
         const service = $(services[i])
-        if(service.attr('checked')) {
+        console.log(service.prop('checked'))
+        if(service.prop('checked')) {
+            console.log(service)
             selected_services.push({name: service.attr('data-name-service'), price: service.val()})
         }
     }
-
-        $('.btn-send-request').click(e => {
             const data = {
                 phone_number: phone_number.val(),
-                product_name: product_name.attr('data-name-product'),
                 product_id: product_id.val(),
-                tarif: tarif.attr('data-tarif-product'),
                 start_rent: start_rent.val(),
                 end_rent: end_rent.val(),
                 price: price.text(),
@@ -125,14 +127,23 @@ $dbh = new sdbh();
             $.ajax({
                 url: 'App/Api/SendMail.php',
                 type: 'POST',
-                dataType: 'json',
+                headers: {
+                    "Content-Type": 'application-json'
+                },
                 data: JSON.stringify(data),
                 success: (data, textStatus, jqXHR) => {
-
-                },
-                error: (jqXHR, textStatus, errorThrown) => {
-                    
-                }
+          if(textStatus === 'success') {
+            showResult("Заявка успешно отправлена! Ожидайте обратной связи", '.result')
+          }
+          else {
+            showError("Ошибка отправик заявки! Попробуйте позже...", '.result')
+          }
+          hiddenBlock('.lds-ring')
+        },
+        error: (error, textStatus, errorThrown) => {
+          hiddenBlock('.lds-ring')
+          showError("Ошибка отправки! Попробуйте позже...", '.result')
+        }
             })
         })
 

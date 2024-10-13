@@ -8,7 +8,7 @@ use PHPMailer\PHPMailer\Exception;
 
 
 
-require 'vendor/autoload.php';
+require '../../vendor/autoload.php';
 
 
 
@@ -22,11 +22,11 @@ try {
     //Server settings
     $mail->SMTPDebug = SMTP::DEBUG_SERVER;                      
     $mail->isSMTP();                                            
-    $mail->Host       = 'smtp.google.com';                    
+    $mail->Host       = 'smtp.gmail.com';                    
     $mail->SMTPAuth   = true;                                   
-    $mail->Username   = 'ai329390@gmail.com';                    
-    $mail->Password   = 'f o l h q o i i d i d w s l k r';                                
-    $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;             
+    $mail->Username   = 'yatatur77@gmail.com';                    
+    $mail->Password   = 'gtep kdlv bhhn kdkg';                                
+    // $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;             
     $mail->Port       = 587;                                    
 
     //Recipients
@@ -39,9 +39,9 @@ try {
     $mail->Body    = $body;
 
     $mail->send();
-    return 'Заявка успешно отправлена!';
+    return true;
 } catch (Exception $e) {
-    echo "Ошибка отправки заявки! Ошибка: {$mail->ErrorInfo}";
+    return "Ошибка отправки заявки! Ошибка: {$mail->ErrorInfo}";
 }
 
 }

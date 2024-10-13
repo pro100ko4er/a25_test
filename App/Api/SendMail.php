@@ -20,9 +20,8 @@ $data = json_decode($postData, true);
 
 
 
-if(!isset($data['phone-number'])) {
-    echo "Необходимо ввести номер телефона!";
-    exit;
+if(!isset($data['phone_number'])) {
+    return "Необходимо ввести номер телефона!";
 }
 
 if(!isset($data['product_id'])) {
@@ -35,13 +34,15 @@ else {
 }
 
 
+$product = $adminService->get($data['product_id']);
+
+$product_name = $product[0]['NAME'];
+
+$tariff = $product[0]['TARIFF'];
+
 $product_id = $data['product_id'];
 
 $phone_number = $data['phone_number'];
-
-$product_name = $data['product_name'];
-
-$tariff = $data['tariff'];
 
 $start_rent = $data['start_rent'];
 
@@ -49,7 +50,7 @@ $end_rent = $data['end_rent'];
 
 $price = $data['price'];
 
-$services = $data['services'];
+$services = $data['selected_services'];
 
 
 
@@ -57,7 +58,7 @@ $services = $data['services'];
 $services_text = '';
 
 foreach ($services as $k => $v) {
-    $services_text += "<p>$k : $v</p>";
+    $services_text .= "<p>".$v['name'].": ".$v['price']."</p>";
 }
 
 
@@ -76,7 +77,21 @@ $message = "
 </div>
 ";
 
-return  mailer($from, $to, $subject, $message);
+
+$send_mail = mailer($from, $to, $subject, $message);
+if(is_bool($send_mail)) {
+    if($send_mail) {
+        return json_encode(["status" => 'ok', "message" => "Заявка успешно отправлена! Ожидайте обратной связи"]);
+    }
+    else {
+        http_response_code(500);
+        return json_encode(["status" => 'error', "message" => "Ошибка сервера! Попробуйте позже..."]);
+    }
+}
+else {
+    http_response_code(500);
+    return json_encode(["status" => 'error', "message" => $send_mail]);
+}
 
 }
 

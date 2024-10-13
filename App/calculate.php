@@ -7,6 +7,16 @@ use sdbh\sdbh;
 class Calculate
 {
 
+
+    public function checkValidDateStart($days_start_rent) {
+        $d1 = strtotime($days_start_rent);
+        $current_date = strtotime(date('d.m.y'));
+        if($d1 - $current_date <= -1) {
+            return false;
+        }
+        return true;
+    }
+
     public function count_days($days_start_rent, $days_end_rent) {
         $d1 = strtotime($days_start_rent);
         $d2 = strtotime($days_end_rent);
@@ -21,6 +31,11 @@ class Calculate
         $dbh = new sdbh();
         $days_start_rent = isset($_POST['days-start-rent']) ? $_POST['days-start-rent'] : 0;
         $days_end_rent = isset($_POST['days-end-rent']) ? $_POST['days-end-rent'] : 0;
+        $check_valid_date = $this->checkValidDateStart($days_start_rent);
+        if(!$check_valid_date) {
+            echo "Дата начала не может быть раньше, чем текущая дата!";
+            return;
+        }
         $days = $this->count_days($days_start_rent, $days_end_rent);
         if($days <= 0 || $days >= 31) {
             echo "Дата окончания не может быть раньше даты начала и количество дней аренды не может превышать 30!";
